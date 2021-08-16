@@ -1,30 +1,13 @@
 /*
  *
- * THIS CODE WAS STOLEN FROM 'mac2bdf' BY GLENN ADAMS.  THE FOLLOWING COMMENTS
- * DOCUMENT THE ORIGINAL VERSION OF THIS MODULE AND NOT MY HACKS.  BUT I DIDN'T
- * CHANGE MUCH. 
- * Norm Walsh <walsh@cs.umass.edu>
- *
+ * Copyright (C) 2021, Glenn Adams
+ * Copyright (C) 1993, Norm Walsh
  * Copyright (C) 1992, 1993, Metis Technology, Inc.
- *
- * @(#)mac2bdf.c	1.2	3/20/93
  *
  * STANDARD DISCLAIMERS
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the Metis General Public License as published
- * by Metis Technology, Inc.; either version 2, or (at your
- * option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * Metis Library General Public License for more details.
- *
- * In order to receive a copy of the Metis General Public License,
- * write to Metis Technology, Inc., 358 Windsor St, Cambridge, MA 02141, USA.
- * This license may also be retrieved by anonymous FTP from the file
- * "pub/PublicLicense" on the host METIS.COM [140.186.33.40].
+ * This program is distributed under the BSD 2-Clause License as
+ * specified in the accompanying LICENSE file.
  *
  * PROGRAM DESCRIPTION
  *
@@ -61,10 +44,12 @@
  *		      -- font name handling to substitute hyphens for
  *		      -- whitespace.  Handle overflows of OWTLoc offset
  *		      -- field for large bitmaps.
+ *           08/19/93 -- Modifications by Norm Walsh.
  * Notes:    1. Orphaned font resources are not yet handled.
  *	     2. Prefixes B,I,BI,Sb,SbI need to be removed.
  *	     3. Add option to specify family, size, style to dump.
- * Author:   Glenn Adams <glenn@metis.com>
+ * Authors:  Glenn Adams <glenn@metis.com> (original code)
+ *           Norm Walsh <walsh@cs.umass.edu> (modifications)
  *
  * WARNINGS
  *
@@ -80,6 +65,13 @@
  * 4. This program is being released in this form in the hope that it will
  *    be useful to someone without all the frills one would expect from a
  *    robust program; this program does not make any claims to robustness.
+ *
+ * N.B. The above program description is based upon a prior distribution
+ * by Metis Technology, Inc which contained a top-level main function.
+ * The code found below consists of only the primary Mac Font Resource
+ * to BDF conversion functions. A top-level main function that would be
+ * invoked by a mac2bdf executable as described above is not included
+ * herein.
  */
 
 #include <alloca.h>
