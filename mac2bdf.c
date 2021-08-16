@@ -69,7 +69,7 @@
  * N.B. The above program description is based upon a prior distribution
  * by Metis Technology, Inc which contained a top-level main function.
  * The code found below consists of only the primary Mac Font Resource
- * to BDF conversion functions. A top-level main function would be
+ * to BDF conversion functions. A top-level main function that would be
  * invoked by a mac2bdf executable as described above is not included
  * herein.
  */
