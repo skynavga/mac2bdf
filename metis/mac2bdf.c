@@ -1,13 +1,24 @@
 /*
- *
- * Copyright (C) 2021, Glenn Adams
- * Copyright (C) 1993, Norm Walsh
  * Copyright (C) 1992, 1993, Metis Technology, Inc.
+ *
+ * @(#)mac2bdf.c	1.2	3/20/93
  *
  * STANDARD DISCLAIMERS
  *
- * This program is distributed under the BSD 2-Clause License as
- * specified in the accompanying LICENSE file.
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the Metis General Public License as published
+ * by Metis Technology, Inc.; either version 2, or (at your
+ * option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * Metis Library General Public License for more details.
+ *
+ * In order to receive a copy of the Metis General Public License,
+ * write to Metis Technology, Inc., 358 Windsor St, Cambridge, MA 02141, USA.
+ * This license may also be retrieved by anonymous FTP from the file
+ * "pub/PublicLicense" on the host METIS.COM [140.186.33.40].
  *
  * PROGRAM DESCRIPTION
  *
@@ -44,12 +55,10 @@
  *		      -- font name handling to substitute hyphens for
  *		      -- whitespace.  Handle overflows of OWTLoc offset
  *		      -- field for large bitmaps.
- *           08/19/93 -- Modifications by Norm Walsh.
  * Notes:    1. Orphaned font resources are not yet handled.
  *	     2. Prefixes B,I,BI,Sb,SbI need to be removed.
  *	     3. Add option to specify family, size, style to dump.
- * Authors:  Glenn Adams <glenn@metis.com> (original code)
- *           Norm Walsh <walsh@cs.umass.edu> (modifications)
+ * Author:   Glenn Adams <glenn@metis.com>
  *
  * WARNINGS
  *
@@ -65,9 +74,6 @@
  * 4. This program is being released in this form in the hope that it will
  *    be useful to someone without all the frills one would expect from a
  *    robust program; this program does not make any claims to robustness.
- *
- * N.B. The above program description is based upon a prior distribution
- * by Metis Technology, Inc., which can be found under metis/mac2bdf.c.
  */
 
 #include <alloca.h>
@@ -224,6 +230,25 @@ CARD8 *p;
   return (INT32) toulong ( p );
 }
 
+void
+  FontShow ( fp )
+FontRsrc fp;
+{
+  (void) printf ( "  Type:        0x%04x\n",  toushort ( fp->ftFontType    ) );
+  (void) printf ( "  First Glyph: 0x%02x\n",  toushort ( fp->ftFirstChar   ) );
+  (void) printf ( "  Last Glyph:  0x%02x\n",  toushort ( fp->ftLastChar    ) );
+  (void) printf ( "  Max Width:   %d\n",      toshort  ( fp->ftWidMax      ) );
+  (void) printf ( "  Max Kern:    %d\n",      toshort  ( fp->ftKernMax     ) );
+  (void) printf ( "  Neg Descent: %d\n",      toshort  ( fp->ftNDescent    ) );
+  (void) printf ( "  Rect Width:  %d\n",      toshort  ( fp->ftFRectWidth  ) );
+  (void) printf ( "  Rect Height: %d\n",      toshort  ( fp->ftFRectHeight ) );
+  (void) printf ( "  OWT Offset:  %d\n",      toushort ( fp->ftOWTLoc      ) );
+  (void) printf ( "  Ascent:      %d\n",      toshort  ( fp->ftAscent      ) );
+  (void) printf ( "  Descent:     %d\n",      toshort  ( fp->ftDescent     ) );
+  (void) printf ( "  Leading:     %d\n",      toshort  ( fp->ftLeading     ) );
+  (void) printf ( "  Row Words:   %d\n",      toshort  ( fp->ftRowWords    ) );
+}
+
 /*
  * Find font bounding box and total number of glyphs.
  */
@@ -359,7 +384,6 @@ char *
 int style;
 {
   static char sname [ 128 ];
-  char *retsname;
 
   sname [ 0 ] = '\0';
   if ( style & 0001 )
@@ -376,10 +400,7 @@ int style;
     (void) strcat ( sname, "Condensed" );
   if ( style & 0100 )
     (void) strcat ( sname, "Extended" );
-
-  retsname = (char *) malloc (strlen(sname+1));
-  strcpy(retsname, sname);
-  return retsname;
+  return sname;
 }
 
 int
@@ -540,3 +561,401 @@ int	 size;
   return 1;
 }
 
+void
+  FondShow ( fp )
+FondRsrc fp;
+{
+  CARD8 *assocTab;
+  int n, nf;
+
+  (void) printf ( "  Flags:       0x%04x\n",  toushort ( fp->fdFlags   ) );
+  (void) printf ( "  Family Id:   %d\n",      toshort  ( fp->fdFamID   ) );
+  (void) printf ( "  First Char:  0x%02x\n",  toushort ( fp->fdFirst   ) );
+  (void) printf ( "  Last Char:   0x%02x\n",  toushort ( fp->fdLast    ) );
+  (void) printf ( "  WT Offset:   0x%08x\n",  toulong  ( fp->fdWTabOff ) );
+  (void) printf ( "  KT Offset:   0x%08x\n",  toulong  ( fp->fdKernOff ) );
+  (void) printf ( "  ST Offset:   0x%08x\n",  toulong  ( fp->fdStylOff ) );
+  (void) printf ( "  Version:     %d\n",      toushort ( fp->fdVersion ) );
+
+  assocTab  = (CARD8 *) & fp [ 1 ];
+  nf        = toshort ( assocTab ) + 1;
+  (void) printf ( "  Fonts:       %d\n",        nf );
+  assocTab += sizeof (CARD16);
+  for ( n = 0; n < nf; n++ ) {
+    register CARD8 *ap = & assocTab [ n * 6 ];
+    (void) printf ( "  Font %d\n", n );
+    (void) printf ( "    Size:      %d\n",     toushort ( & ap [ 0 ] ) );
+    (void) printf ( "    Style:     0x%04x\n", toushort ( & ap [ 2 ] ) );
+    (void) printf ( "    RSC ID:    %d\n",     toshort  ( & ap [ 4 ] ) );
+  }
+}
+
+int
+  FondFontCount ( fp )
+FondRsrc fp;
+{
+  return toshort ( (CARD8 *) & fp [ 1 ] ) + 1;
+}
+
+void
+  FondFontInfo ( fp, nf, sizes, styles, ids )
+FondRsrc fp;
+int      nf;
+INT16 *  sizes;
+INT16 *  styles;
+INT16 *  ids;
+{
+  register CARD8 *assocTab  = (CARD8 *) & fp [ 1 ];
+  register int n;
+
+  assocTab += sizeof (CARD16);
+  for ( n = 0; n < nf; n++ ) {
+    register CARD8 *ap = & assocTab [ n * 6 ];
+    sizes  [ n ] = toshort ( & ap [ 0 ] );
+    styles [ n ] = toshort ( & ap [ 2 ] );
+    ids    [ n ] = toshort ( & ap [ 4 ] );
+  }
+}
+
+void
+  AddFontToFontNames ( fn )
+FontName fn;
+{
+  register FontName *fnp;
+
+  for ( fnp = & fontnames; *fnp; fnp = & (*fnp)->next )
+    continue;
+  *fnp = fn;
+}
+
+void
+  FondAddFonts ( fp, fondname, fondnamelen )
+FondRsrc fp;
+char *	 fondname;
+int	 fondnamelen;
+{
+  register int nf, num_fonts;
+  register FontName fn;
+  register char *cp;
+  INT16 *sizes;
+  INT16 *styles;
+  INT16 *identifiers;
+  char   namebuf [ 132 ];
+
+  if ( ! ( num_fonts = FondFontCount ( fp ) ) )
+    return;
+
+  sizes       = (INT16 *) alloca ( num_fonts * sizeof (INT16) );
+  styles      = (INT16 *) alloca ( num_fonts * sizeof (INT16) );
+  identifiers = (INT16 *) alloca ( num_fonts * sizeof (INT16) );
+  FondFontInfo ( fp, num_fonts, sizes, styles, identifiers );
+  for ( nf = 0; nf < num_fonts; nf++ ) {
+    if ( ! sizes [ nf ] )
+      continue;
+    if ( ! ( fn = (FontName) malloc ( sizeof (*fn) ) ) ) {
+      (void) fprintf ( stderr, "%s: out of memory: fond add fonts\n",
+		       progname );
+      return;
+    }
+    (void) strncpy ( namebuf, fondname, fondnamelen );
+    namebuf [ fondnamelen ] = '\0';
+    fn->name        = strdup ( namebuf );
+    for ( cp = fn->name; *cp; cp++ )
+      if ( isspace ( *cp) )
+	*cp = '-';
+    fn->size        = sizes       [ nf ];
+    fn->style       = styles      [ nf ];
+    fn->resource_id = identifiers [ nf ];
+    fn->next        = (FontName) NULL;
+    AddFontToFontNames ( fn );
+  }
+}
+
+CARD8 *
+  _LoadResource ( rf, doff, rdoff, ret_length )
+FILE  * rf;
+CARD32	doff;	
+CARD32	rdoff;	
+int   * ret_length;
+{
+  INT32			rdlen;
+  CARD8 *		bp;
+  CARD8 		buf [ 4 ];
+  
+  if ( fseek ( rf, doff + rdoff, 0 ) < 0 ) {
+    (void) fprintf ( stderr, "%s: resource seek error, offset %ld\n",
+		     progname, doff + rdoff );
+    return (CARD8 *) NULL;
+  }
+
+  if ( fread ( (char *) buf, sizeof (buf), 1, rf ) != 1 ) {
+    (void) fprintf ( stderr, "%s: resource length read error\n", progname );
+    return (CARD8 *) NULL;
+  }
+  rdlen = tolong ( buf );
+
+  if ( ! ( bp = (CARD8 *) malloc ( rdlen * sizeof (CARD8) ) ) ) {
+    (void) fprintf ( stderr, "%s: memory request failed, %d bytes\n",
+		     progname );
+    return (CARD8 *) NULL;
+  }
+  
+  if ( fread ( (char *) bp, rdlen, 1, rf ) != 1 ) {
+    (void) fprintf ( stderr, "%s: resource read error\n", progname );
+    return (CARD8 *) NULL;
+  }
+
+  if ( ret_length )
+    *ret_length = (int) rdlen;
+  return bp;
+}
+
+CARD8 *
+  LoadResource ( rf, doff, rmap, type, id, ret_length )
+FILE  * rf;
+CARD32	doff;	
+CARD8 * rmap;
+char  * type;
+int     id;
+int   * ret_length;
+{
+  register RsrcType	tp, etp;
+  register RsrcRef	rp, erp;
+  CARD32		typeoff;
+  CARD8  		buf [ 4 ];
+
+  typeoff = toushort ( ( (RsrcMap) rmap ) -> rmTypeOffset );
+  tp  = (RsrcType) & rmap [ typeoff + 2 ];
+  etp = & tp [ toushort ( & rmap [ typeoff ] ) + 1 ];
+  for ( ; tp < etp; tp++ ) {
+    if ( memcmp ( (char *) tp->rtName, (char *) type, 4 ) != 0 )
+      continue;
+    rp  = (RsrcRef) & rmap [ typeoff + toushort ( tp->rtRefOffset ) ];
+    erp = & rp [ toushort ( tp->rtCount ) + 1 ];
+    for ( ; rp < erp; rp++ ) {
+      if ( (int) toshort ( rp->rrIdent ) != id )
+	continue;
+      (void) memcpy ( (char *) buf, (char *) rp->rrAttr, sizeof (buf) );
+      buf [ 0 ] = 0;
+      return _LoadResource ( rf, doff, toulong ( buf ), ret_length );
+    }
+  }
+  return (CARD8 *) NULL;
+}
+
+/*ARGSUSED*/
+void
+  FreeResource ( rp, length )
+CARD8 *	rp;
+int     length;
+{
+  if ( rp )
+    (void) free ( (char *) rp );
+}
+
+int
+  DumpFonts ( rf, doff, rmap )
+FILE  * rf;
+CARD32	doff;
+CARD8 *	rmap;
+{
+  register FontName fn;
+  FontRsrc fp;
+  int length;
+
+  for ( fn = fontnames; fn; fn = fn->next ) {
+    fp = (FontRsrc)
+      LoadResource ( rf, doff, rmap, "NFNT", fn->resource_id, & length );
+    if ( ! fp ) {
+      fp = (FontRsrc)
+	LoadResource ( rf, doff, rmap, "FONT", fn->resource_id, & length );
+      if ( ! fp ) {
+	(void) fprintf ( stderr, "%s: can't find font, name \"%s\", id %d\n",
+			 progname, fn->name, fn->resource_id );
+	continue;
+      }
+    }
+    if ( verbose ) {
+      (void) printf (
+	       "Font \"%s\", Style %s, Size %d, Resource Id %d, Length %d\n",
+	       fn->name,
+	       FontStyleName ( fn->style ),
+	       fn->size,
+	       fn->resource_id,
+               length );
+      FontShow ( fp );
+    }
+    if ( nodump ) {
+      (void) printf  ( "Would dump \"%s%s-%d.bdf\"\n",
+		       fn->name, FontStyleName ( fn->style ), fn->size );
+      continue;
+    }
+    if ( ! FontDump ( fp, fn->name, fn->style, fn->size ) ) {
+      (void) fprintf ( stderr, "%s: warning: dump failed, font \"%s%s-%d\"\n",
+		       fn->name, FontStyleName ( fn->style ), fn->size );
+    }
+    FreeResource ( (CARD8 *) fp, length );
+  }
+}
+
+/*ARGSUSED*/
+int
+  main ( argc, argv )
+int argc;
+char **argv;
+{
+  FILE *		rf		= (FILE *) NULL;
+  CARD32		datalen;
+  CARD32		dataoff;
+  CARD32		rmaplen;
+  CARD32		typeoff;
+  CARD32		nameoff;
+  int			namelen;
+  char *		name;
+  MacBinHdrRec		mbrec;
+  RsrcHdrRec		rhrec;
+  register RsrcType	tp, etp;
+  register RsrcRef	rp, erp;
+  CARD8 *		rmap;
+
+  progname = argv [ 0 ];
+
+  while ( --argc && *++argv && ( argv[0][0] == '-' ) ) {
+    switch ( argv[0][1] ) {
+    case 'n':
+      nodump  = 1;
+      break;
+    case 'q':
+      quiet   = 1;
+      break;
+    case 'v':
+      verbose = 1;
+      break;
+    default:
+      break;
+    }
+  }
+
+  if ( ! argc ) {
+    (void) fprintf ( stderr,
+		     "usage: %s [-n] [-v] infile\n", progname );
+    return 1;
+  }
+
+  if ( ! ( rf = fopen ( argv [ 0 ], "r" ) ) ) {
+    (void) fprintf ( stderr, "%s: can't open file \"%s\"\n",
+		     progname, argv [ 0 ] );
+    return 1;
+  }
+
+  /*
+   * Read MacBinary header
+   */
+  if ( fread ( (char *) & mbrec, sizeof (mbrec), 1, rf ) != 1 ) {
+    (void) fprintf ( stderr, "%s: can't read MacBinary header\n", progname );
+    goto err;
+  }
+
+  if ( ! toushort ( mbrec . fnFlags ) )
+    return 0;
+
+  /*
+   * Seek to resource fork.
+   */
+  datalen = tolong ( mbrec . fnDataLen );
+  if ( fseek ( rf, datalen, 1 ) == -1 ) {
+    (void) fprintf ( stderr, "%s: can't seek to resource fork\n", progname );
+    goto err;
+  }
+
+  /*
+   * Read resource header
+   */
+  if ( fread ( (char *) & rhrec, sizeof (rhrec), 1, rf ) != 1 ) {
+    (void) fprintf ( stderr, "%s: can't read resource header\n", progname );
+    goto err;
+  }
+
+  /*
+   * Skip system and application data in resource header.
+   */
+  if ( fseek ( rf, RHDRLEN - sizeof (rhrec), 1 ) == -1 ) {
+    (void) fprintf ( stderr, "%s: can't seek to resource data\n", progname );
+    goto err;
+  }
+
+  /*
+   * Skip over resource data
+   */
+  dataoff = ftell ( rf );
+  datalen = tolong ( rhrec . rhDataLen );
+  if ( fseek ( rf, datalen, 1 ) < 0 ) {
+    (void) fprintf ( stderr, "%s: seek error while skipping data\n",
+		     progname );
+    goto err;
+  }
+
+  /*
+   * Read resource map
+   */
+  rmaplen = tolong ( rhrec . rhMapLen );
+  if ( ! ( rmap = (CARD8 *) malloc ( rmaplen ) ) ) {
+    (void) fprintf ( stderr, "%s: out of memory: resource map\n", progname );
+    goto err;
+  }
+  if ( fread ( (char *) rmap, rmaplen, 1, rf ) != 1 ) {
+    (void) fprintf ( stderr, "%s: can't read resource map\n", progname );
+    goto err;
+  }
+
+  /*
+   * Iterate over types and type references.
+   */
+  nameoff = toushort ( ( (RsrcMap) rmap ) -> rmNameOffset );
+  typeoff = toushort ( ( (RsrcMap) rmap ) -> rmTypeOffset );
+  tp  = (RsrcType) & rmap [ typeoff + 2 ];
+  etp = & tp [ toushort ( & rmap [ typeoff ] ) + 1 ];
+  for ( ; tp < etp; tp++ ) {
+    rp  = (RsrcRef) & rmap [ typeoff + toushort ( tp->rtRefOffset ) ];
+    erp = & rp [ toushort ( tp->rtCount ) + 1 ];
+    for ( ; rp < erp; rp++ ) {
+      INT16    nmoff;
+      int      rid, rdlen;
+      FondRsrc fp;
+
+      nmoff     = toshort ( rp->rrNameOffset );
+      namelen   = ( nmoff >= 0 ) ?
+		    (int) rmap [ nameoff + nmoff ] : 0;
+      name      = ( nmoff >= 0 ) ?
+		    (char *) & rmap [ nameoff + nmoff + 1 ] : "";
+      if ( memcmp ( (char *) tp->rtName, "FOND", 4 ) != 0 )
+	continue;
+      rid = toshort ( rp->rrIdent );
+      fp  = (FondRsrc)
+	LoadResource ( rf, dataoff, rmap, "FOND", rid, & rdlen );
+      if ( ! fp )
+	continue;
+      if ( verbose ) {
+	(void) printf ( "%.4s %6d %6d   %.*s\n",
+			(char *) tp->rtName,
+		        rid,
+		        rdlen,
+		        namelen,
+		        name );
+	FondShow ( fp );
+      }
+      FondAddFonts ( fp, name, namelen );
+      FreeResource ( (CARD8 *) fp, rdlen );
+    }
+  }
+
+  DumpFonts ( rf, dataoff, rmap );
+  (void) fclose ( rf );
+
+  return 0;
+
+ err:
+  if ( rf )
+    (void) fclose ( rf );
+  return 1;
+}
